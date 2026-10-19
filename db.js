@@ -8,7 +8,7 @@ const pool = new Pool({
   database: process.env.PGDATABASE,
   port: process.env.PGPORT,
   // Uncomment below if connecting to AWS RDS over SSL:
-  // ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false }
 });
 
 module.exports = pool;
