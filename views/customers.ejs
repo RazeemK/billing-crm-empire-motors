@@ -1,0 +1,107 @@
+<%- include('layout') %>
+
+<div class="row">
+  <!-- Add New Customer Form -->
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Add New Customer & Vehicle</h5>
+      </div>
+      <div class="card-body">
+        <form action="/customers/new" method="POST">
+          <div class="mb-2">
+            <label class="form-label">Customer Name</label>
+            <input type="text" name="customer_name" class="form-control" required>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Phone No</label>
+              <input type="text" name="phone_no" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Vehicle Number</label>
+              <input type="text" name="vehicle_number" class="form-control" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Engine No</label>
+              <input type="text" name="engine_no" class="form-control">
+            </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Chassis No</label>
+              <input type="text" name="chassis_no" class="form-control">
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Branch Name</label>
+            <input type="text" name="branch_name" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Address 1</label>
+            <input type="text" name="address1" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Address 2</label>
+            <input type="text" name="address2" class="form-control">
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">City</label>
+              <input type="text" name="city" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">State</label>
+              <input type="text" name="state" class="form-control">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-success w-100">Save Customer</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Listing -->
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Customer Directory</h5>
+        <form action="/" method="GET" class="d-flex w-50">
+          <input type="text" name="search" class="form-control form-control-sm me-2" placeholder="Search Name/Vehicle..." value="<%= search %>">
+          <button type="submit" class="btn btn-light btn-sm">Search</button>
+        </form>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Vehicle No.</th>
+              <th>Branch</th>
+              <th>Phone</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if(customers.length === 0) { %>
+              <tr><td colspan="5" class="text-center text-muted">No records found</td></tr>
+            <% } %>
+            <% customers.forEach(c => { %>
+              <tr>
+                <td><strong><%= c.customer_name %></strong></td>
+                <td><span class="badge bg-dark"><%= c.vehicle_number %></span></td>
+                <td><%= c.branch_name || '-' %></td>
+                <td><%= c.phone_no %></td>
+                <td>
+                  <a href="/customers/<%= c.customer_id %>" class="btn btn-sm btn-outline-primary">View History</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

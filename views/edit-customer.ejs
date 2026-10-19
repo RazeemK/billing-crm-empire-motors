@@ -1,0 +1,65 @@
+<%- include('layout') %>
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">Edit Customer Information</h5>
+      </div>
+      <div class="card-body">
+        <form action="/customers/<%= customer.customer_id %>/edit" method="POST">
+          <div class="mb-2">
+            <label class="form-label">Customer Name</label>
+            <input type="text" name="customer_name" value="<%= customer.customer_name %>" class="form-control" required>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Phone No</label>
+              <input type="text" name="phone_no" value="<%= customer.phone_no %>" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Vehicle Number</label>
+              <input type="text" name="vehicle_number" value="<%= customer.vehicle_number %>" class="form-control" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Engine No</label>
+              <input type="text" name="engine_no" value="<%= customer.engine_no %>" class="form-control">
+            </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Chassis No</label>
+              <input type="text" name="chassis_no" value="<%= customer.chassis_no %>" class="form-control">
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Branch Name</label>
+            <input type="text" name="branch_name" value="<%= customer.branch_name %>" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Address 1</label>
+            <input type="text" name="address1" value="<%= customer.address1 %>" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Address 2</label>
+            <input type="text" name="address2" value="<%= customer.address2 %>" class="form-control">
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">City</label>
+              <input type="text" name="city" value="<%= customer.city %>" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">State</label>
+              <input type="text" name="state" value="<%= customer.state %>" class="form-control">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Update Profile</button>
+          <a href="/customers/<%= customer.customer_id %>" class="btn btn-link w-100 mt-2">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

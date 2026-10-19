@@ -1,0 +1,112 @@
+<%- include('layout') %>
+
+<a href="/" class="btn btn-secondary btn-sm mb-3">&larr; Back to Directory</a>
+
+<div class="row">
+  <!-- Master Details -->
+  <div class="col-md-4">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Customer Profile</h5>
+        <a href="/customers/<%= customer.customer_id %>/edit" class="btn btn-sm btn-warning">Edit</a>
+      </div>
+      <div class="card-body">
+        <h4><%= customer.customer_name %></h4>
+        <p class="mb-1"><strong>Vehicle No:</strong> <span class="badge bg-success"><%= customer.vehicle_number %></span></p>
+        <p class="mb-1"><strong>Phone No:</strong> <%= customer.phone_no %></p>
+        <p class="mb-1"><strong>Branch:</strong> <%= customer.branch_name || 'N/A' %></p>
+        <p class="mb-1"><strong>Engine No:</strong> <%= customer.engine_no || 'N/A' %></p>
+        <p class="mb-1"><strong>Chassis No:</strong> <%= customer.chassis_no || 'N/A' %></p>
+        <hr>
+        <p class="mb-1"><strong>Address:</strong><br>
+          <%= customer.address1 %><br>
+          <% if(customer.address2) { %><%= customer.address2 %><br><% } %>
+          <%= customer.city %>, <%= customer.state %>
+        </p>
+      </div>
+    </div>
+
+    <!-- Add Service / Spare Parts Entry -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Log Service / Parts Sale</h5>
+      </div>
+      <div class="card-body">
+        <form action="/customers/<%= customer.customer_id %>/visits/new" method="POST">
+          <div class="mb-2">
+            <label class="form-label">Service Type</label>
+            <select name="service_type" class="form-select" required>
+              <option value="Repair Work">Repair Work</option>
+              <option value="Spare Parts Purchase">Spare Parts Purchase</option>
+              <option value="Routine Service">Routine Service</option>
+              <option value="Inspection">Inspection</option>
+            </select>
+          </div>
+          <div class="row">
+            <div class="col-6 mb-2">
+              <label class="form-label">Date</label>
+              <input type="date" name="visit_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+            </div>
+            <div class="col-6 mb-2">
+              <label class="form-label">Odometer (KM)</label>
+              <input type="number" name="odometer_reading" class="form-control">
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Work Done / Notes</label>
+            <textarea name="work_description" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Spare Parts Replaced/Sold</label>
+            <textarea name="parts_replaced" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Bill Amount ($)</label>
+            <input type="number" step="0.01" name="bill_amount" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-success w-100">Save Visit Record</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visit History List -->
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Service & Parts History</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Odometer</th>
+              <th>Work Details</th>
+              <th>Parts Sold</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if(visits.length === 0) { %>
+              <tr><td colspan="6" class="text-center text-muted">No visit history recorded yet.</td></tr>
+            <% } %>
+            <% visits.forEach(v => { %>
+              <tr>
+                <td><%= new Date(v.visit_date).toLocaleDateString() %></td>
+                <td><span class="badge bg-info text-dark"><%= v.service_type %></span></td>
+                <td><%= v.odometer_reading ? v.odometer_reading + ' km' : 'N/A' %></td>
+                <td><%= v.work_description || '-' %></td>
+                <td><%= v.parts_replaced || '-' %></td>
+                <td><strong>$<%= Number(v.bill_amount).toFixed(2) %></strong></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
