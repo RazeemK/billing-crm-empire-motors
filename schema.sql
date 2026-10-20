@@ -65,3 +65,8 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(20) DEFAULT 'staff',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+--id in sync
+SELECT setval('customers_customer_id_seq', COALESCE((SELECT MAX(customer_id) FROM customers), 0) + 1, false);
+SELECT setval('spare_parts_inventory_id_seq', COALESCE((SELECT MAX(id) FROM spare_parts_inventory), 0) + 1, false);
