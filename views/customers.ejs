@@ -1,5 +1,7 @@
 <%- include('layout') %>
 
+<a href="/" class="btn btn-secondary btn-sm mb-3">&larr; Back to Dashboard</a>
+
 <div class="row">
   <!-- Add New Customer Form -->
   <div class="col-md-5">
@@ -61,13 +63,13 @@
     </div>
   </div>
 
-  <!-- Customer Listing -->
+  <!-- Customer Search & Results -->
   <div class="col-md-7">
     <div class="card shadow-sm">
       <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Customer Directory</h5>
-        <form action="/" method="GET" class="d-flex w-50">
-          <input type="text" name="search" class="form-control form-control-sm me-2" placeholder="Search Name/Vehicle..." value="<%= search %>">
+        <h5 class="mb-0">Customer Search</h5>
+        <form action="/customers" method="GET" class="d-flex w-50">
+          <input type="text" name="search" class="form-control form-control-sm me-2" placeholder="Search Name/Vehicle/Phone..." value="<%= search %>">
           <button type="submit" class="btn btn-light btn-sm">Search</button>
         </form>
       </div>
@@ -84,7 +86,7 @@
           </thead>
           <tbody>
             <% if(customers.length === 0) { %>
-              <tr><td colspan="5" class="text-center text-muted">No records found</td></tr>
+              <tr><td colspan="5" class="text-center text-muted py-4"><%= search ? 'No customers found matching your search.' : 'Use the search bar above to look up customers.' %></td></tr>
             <% } %>
             <% customers.forEach(c => { %>
               <tr>
