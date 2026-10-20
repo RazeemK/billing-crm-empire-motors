@@ -26,3 +26,14 @@ CREATE TABLE IF NOT EXISTS customer_visits (
     bill_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+--3. Spare Parts Inventory
+CREATE TABLE IF NOT EXISTS spare_parts_inventory (
+    id SERIAL PRIMARY KEY,
+    product_code VARCHAR(50) NOT NULL,
+    product_name VARCHAR(100) NOT NULL,
+    closing_stock INT,
+    source VARCHAR(20), 
+    mrp_price decimal(10, 2),
+    purchase_price decimal(10, 2)
+);
