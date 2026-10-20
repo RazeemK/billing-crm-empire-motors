@@ -1,0 +1,11 @@
+##Start up command
+pm2 start npm --name "crm" -- start
+
+##Logs
+pm2 logs crm
+
+##Status
+pm2 Status
+
+##Stop
+pm2 stop crm
