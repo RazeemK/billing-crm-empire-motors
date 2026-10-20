@@ -462,7 +462,7 @@ app.get('/billing/invoice/:id/pdf', requireAuth, async (req, res) => {
     doc.pipe(res);
 
     // PDF Layout Content
-    doc.fontSize(20).text('AUTOCARE WORKSHOP', { align: 'center' });
+    doc.fontSize(20).text('Empire Motors', { align: 'center' });
     doc.fontSize(10).text('Automotive Repair & Spare Parts Sales', { align: 'center' });
     doc.moveDown(2);
 
