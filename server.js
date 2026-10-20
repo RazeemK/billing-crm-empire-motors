@@ -27,7 +27,7 @@ app.get('/customers', async (req, res) => {
         WHERE customer_name ILIKE $1 OR vehicle_number ILIKE $1 OR phone_no ILIKE $1
         ORDER BY created_at DESC
       `;
-      const result = await db.query(query, [`%${search}%`]);
+      const result = await db.query(query, [`%${search.trim()}%`]);
       customers = result.rows;
     }
 
@@ -121,14 +121,100 @@ app.get('/billing', (req, res) => {
   res.render('billing');
 });
 
-// --- MODULE 3: STOCK MANAGEMENT (Stub) ---
-app.get('/stock', (req, res) => {
-  res.render('stock');
+// ==========================================
+// --- MODULE 3: STOCK MANAGEMENT ---
+// ==========================================
+
+// 1. Search & View Stock Items
+// --- MODULE 3: STOCK MANAGEMENT (Search Only, No Initial Load) ---
+app.get('/stock', async (req, res) => {
+  try {
+    const search = req.query.search || '';
+    let items = [];
+
+    // Only query database if the user typed something in the search bar
+    if (search.trim() !== '') {
+      const query = `
+        SELECT * FROM spare_parts_inventory 
+        WHERE product_code ILIKE $1 OR product_name ILIKE $1 OR source ILIKE $1
+        ORDER BY product_name ASC
+      `;
+      const result = await db.query(query, [`%${search.trim()}%`]);
+      items = result.rows;
+    } else {
+      // Else, show top 50 items by closing stock
+      const query = `
+        SELECT * FROM spare_parts_inventory 
+        ORDER BY closing_stock DESC LIMIT 50
+      `;
+      const result = await db.query(query);
+      items = result.rows;
+    }
+
+    res.render('stock', { items, search });
+  } catch (err) {
+    console.error('Stock Route Error:', err);
+    res.status(500).send('Database Error');
+  }
+});
+// 2. Add New Spare Part Item
+app.post('/stock/new', async (req, res) => {
+  const { product_code, product_name, closing_stock, source, mrp_price, purchase_price } = req.body;
+  try {
+    await db.query(
+      `INSERT INTO spare_parts_inventory (product_code, product_name, closing_stock, source, mrp_price, purchase_price)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        product_code, 
+        product_name, 
+        closing_stock || 0, 
+        source, 
+        mrp_price || 0.00, 
+        purchase_price || 0.00
+      ]
+    );
+    res.redirect('/stock');
+  } catch (err) {
+    console.error('Error adding stock:', err);
+    res.status(500).send('Error adding stock item.');
+  }
 });
 
-// --- MODULE 3: STOCK MANAGEMENT (Stub) ---
-app.get('/user', (req, res) => {
-  res.render('user');
+// 3. Render Edit Stock Item Page
+app.get('/stock/:id/edit', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM spare_parts_inventory WHERE id = $1', [req.params.id]);
+    if (rows.length === 0) return res.status(404).send('Stock item not found');
+    res.render('edit-stock', { item: rows[0] });
+  } catch (err) {
+    console.error('Error fetching stock for edit:', err);
+    res.status(500).send('Database Error');
+  }
+});
+
+// 4. Update Stock Item
+app.post('/stock/:id/edit', async (req, res) => {
+  const { product_code, product_name, closing_stock, source, mrp_price, purchase_price } = req.body;
+  try {
+    await db.query(
+      `UPDATE spare_parts_inventory 
+       SET product_code=$1, product_name=$2, closing_stock=$3, source=$4, mrp_price=$5, purchase_price=$6
+       WHERE id=$7`,
+      [
+        product_code, 
+        product_name, 
+        closing_stock || 0, 
+        source, 
+        mrp_price || 0.00, 
+        purchase_price || 0.00, 
+        req.params.id
+      ]
+    );
+    res.redirect('/stock');
+  } catch (err) {
+    console.error('Error updating stock item:', err);
+    res.status(500).send('Error updating stock item.');
+  }
 });
 
 const PORT = process.env.PORT || 3000;
