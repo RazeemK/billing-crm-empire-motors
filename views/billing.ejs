@@ -1,8 +1,320 @@
 <%- include('layout') %>
+
 <a href="/" class="btn btn-secondary btn-sm mb-3">&larr; Back to Dashboard</a>
-<div class="card shadow-sm p-4 text-center">
-  <h3>💳 Billing Module</h3>
-  <p class="text-muted">This module is currently under development.</p>
+
+<div class="row">
+  <!-- Invoice Generation Form -->
+  <div class="col-md-7">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">🧾 Generate Invoice</h5>
+        <small class="text-white-50">Customer selection is optional</small>
+      </div>
+      <div class="card-body">
+        
+        <!-- Optional Step: Search & Select Customer from System -->
+        <div class="card bg-light border-0 p-2 mb-3">
+          <label class="form-label text-muted small fw-bold mb-1">Optional: Search Existing Customer Profile</label>
+          <form id="customer-search-form" action="/billing" method="GET" class="row g-2 align-items-center">
+            <div class="col-md-8">
+              <input type="hidden" name="partSearch" value="<%= typeof partSearch !== 'undefined' ? partSearch : '' %>">
+              <input type="text" name="custSearch" class="form-control form-control-sm" placeholder="Search by Name/Vehicle/Phone..." value="<%= typeof custSearch !== 'undefined' ? custSearch : '' %>">
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-outline-primary btn-sm w-100">Find in System</button>
+            </div>
+          </form>
+
+          <% if (typeof customers !== 'undefined' && customers.length > 0) { %>
+            <div class="list-group mt-2">
+              <small class="text-muted mb-1">Click to auto-fill customer details:</small>
+              <% customers.forEach(c => { %>
+                <button type="button" class="list-group-item list-group-item-action py-1 px-2 small" onclick="selectCustomer('<%= c.customer_id %>', '<%= c.customer_name %>', '<%= c.vehicle_number %>', '<%= c.address1 || '' %> <%= c.city || '' %>')">
+                  <strong><%= c.customer_name %></strong> (<%= c.vehicle_number %>) - <%= c.phone_no %>
+                </button>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Main Invoice Form (Works for registered or walk-in/non-system customers) -->
+        <form id="invoice-form" action="/billing/new" method="POST">
+          <!-- Hidden field: Left empty/null for non-system customers -->
+          <input type="hidden" name="customer_id" id="customer_id" value="">
+
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Bill To (Customer Name) <span class="text-danger">*</span></label>
+              <input type="text" name="bill_to" id="bill_to" class="form-control" placeholder="Enter customer name" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label">Vehicle Registration No <span class="text-danger">*</span></label>
+              <input type="text" name="vehicle_registration_id" id="vehicle_registration_id" class="form-control" placeholder="e.g. KL-01-AB-1234" required>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">Bill To Address</label>
+            <input type="text" name="bill_to_address" id="bill_to_address" class="form-control" placeholder="Enter street, city, state (optional)">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Service Type <span class="text-danger">*</span></label>
+            <select name="service_type" class="form-select" required>
+              <option value="Repair Work">Repair Work</option>
+              <option value="Spare Parts Purchase">Spare Parts Purchase</option>
+              <option value="Routine Service">Routine Service</option>
+              <option value="Inspection">Inspection</option>
+            </select>
+          </div>
+
+          <hr>
+
+          <!-- Add Spare Parts / Line Items -->
+          <h6>Spare Parts Included:</h6>
+          <div id="parts-container"></div>
+
+          <div class="input-group mb-3 mt-2">
+            <input type="text" id="partSearchInput" class="form-control form-control-sm" placeholder="Search part code/name to add..." value="<%= typeof partSearch !== 'undefined' ? partSearch : '' %>">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="searchParts()">Find Part</button>
+          </div>
+          <div id="partSearchResults" class="list-group mb-3"></div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Total Bill Amount (Rs)</label>
+            <input type="number" step="0.01" name="total_bill" id="total_bill" class="form-control form-control-lg fw-bold" value="0.00" required>
+          </div>
+
+          <button type="submit" class="btn btn-success w-100 btn-lg">Generate & Save Invoice</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Invoices List -->
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Recent Invoices</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Billed To</th>
+              <th>Total (Rs)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (typeof invoices === 'undefined' || invoices.length === 0) { %>
+              <tr><td colspan="4" class="text-center text-muted py-3">No invoices generated yet.</td></tr>
+            <% } else { %>
+              <% invoices.forEach(inv => { %>
+                <tr>
+                  <td><strong>#<%= inv.id %></strong></td>
+                  <td><%= inv.bill_to %><br><small class="text-muted"><%= inv.vehicle_registration_id %></small></td>
+                  <td>Rs.<%= Number(inv.total_bill).toFixed(2) %></td>
+                  <td>
+                    <a href="/billing/invoice/<%= inv.id %>/pdf" target="_blank" class="btn btn-sm btn-outline-danger me-1"
+                      title="Open PDF in new tab">PDF</a>
+                    <a href="/billing/invoice/<%= inv.id %>/print" target="_blank" class="btn btn-sm btn-outline-secondary"
+                      title="Print Invoice">Print</a>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
+
+<script>
+
+  const invoiceDraftKey = 'billingInvoiceDraft';
+  let restoringInvoiceDraft = false;
+
+  function saveInvoiceDraft() {
+    if (restoringInvoiceDraft) return;
+
+    const fields = [
+      'customer_id',
+      'bill_to',
+      'vehicle_registration_id',
+      'bill_to_address',
+      'total_bill'
+    ];
+    const draft = {};
+
+    fields.forEach((id) => {
+      const field = document.getElementById(id);
+      if (field) draft[id] = field.value;
+    });
+
+    const serviceType = document.querySelector('[name="service_type"]');
+    if (serviceType) draft.service_type = serviceType.value;
+
+    draft.parts = Array.from(document.getElementById('parts-container').children)
+      .map((part) => ({
+        id: part.dataset.partId,
+        name: part.dataset.partName,
+        price: part.dataset.partPrice
+      }));
+
+    sessionStorage.setItem(invoiceDraftKey, JSON.stringify(draft));
+  }
+
+  function restoreInvoiceDraft() {
+    const savedDraft = sessionStorage.getItem(invoiceDraftKey);
+    if (!savedDraft) return;
+
+    let draft;
+    try {
+      draft = JSON.parse(savedDraft);
+    } catch (error) {
+      console.error('Could not restore invoice draft:', error);
+      sessionStorage.removeItem(invoiceDraftKey);
+      return;
+    }
+
+    restoringInvoiceDraft = true;
+    try {
+      [
+        'customer_id',
+        'bill_to',
+        'vehicle_registration_id',
+        'bill_to_address'
+      ].forEach((id) => {
+        const field = document.getElementById(id);
+        if (field && draft[id] !== undefined) field.value = draft[id];
+      });
+
+      const serviceType = document.querySelector('[name="service_type"]');
+      if (serviceType && draft.service_type) {
+        serviceType.value = draft.service_type;
+      }
+
+      document.getElementById('parts-container').replaceChildren();
+      (draft.parts || []).forEach((part) => {
+        addPartToInvoice(part.id, part.name, part.price);
+      });
+
+      document.getElementById('total_bill').value = draft.total_bill || '0.00';
+    } catch (error) {
+      console.error('Could not restore invoice draft:', error);
+      sessionStorage.removeItem(invoiceDraftKey);
+      return;
+    } finally {
+      restoringInvoiceDraft = false;
+    }
+
+    saveInvoiceDraft();
+  }
+
+  document.getElementById('invoice-form').addEventListener('input', saveInvoiceDraft);
+  document.getElementById('invoice-form').addEventListener('change', saveInvoiceDraft);
+  document.getElementById('customer-search-form').addEventListener('submit', saveInvoiceDraft);
+  document.getElementById('invoice-form').addEventListener('submit', () => {
+    sessionStorage.removeItem(invoiceDraftKey);
+  });
+
+  restoreInvoiceDraft();
+
+  function selectCustomer(id, name, vehicle, address) {
+    document.getElementById('customer_id').value = id;
+    document.getElementById('bill_to').value = name;
+    document.getElementById('vehicle_registration_id').value = vehicle;
+    document.getElementById('bill_to_address').value = address;
+    saveInvoiceDraft();
+  }
+
+  function searchParts() {
+    const query = document.getElementById('partSearchInput').value.trim();
+    if (!query) return;
+
+    saveInvoiceDraft();
+
+    const params = new URLSearchParams({ partSearch: query });
+    const customerSearch = document.querySelector('[name="custSearch"]').value.trim();
+    if (customerSearch) params.set('custSearch', customerSearch);
+
+    window.location.href = `/billing?${params.toString()}`;
+  }
+
+  
+
+  function addPartToInvoice(id, name, price) {
+    const container = document.getElementById('parts-container');
+    const div = document.createElement('div');
+    div.dataset.partId = id;
+    div.dataset.partName = name;
+    div.dataset.partPrice = price;
+    div.className = 'd-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded border';
+    div.innerHTML = `
+      <span>${name} - <strong>$${parseFloat(price).toFixed(2)}</strong></span>
+      <input type="hidden" name="part_ids" value="${id}">
+      <button type="button" class="btn btn-sm btn-danger" onclick="removePart(this, ${price})">&times;</button>
+    `;
+    container.appendChild(div);
+
+    // Update total bill amount automatically
+    const totalInput = document.getElementById('total_bill');
+    totalInput.value = (parseFloat(totalInput.value || 0) + parseFloat(price)).toFixed(2);
+    saveInvoiceDraft();
+  }
+
+  function removePart(btn, price) {
+    btn.parentElement.remove();
+    const totalInput = document.getElementById('total_bill');
+    totalInput.value = Math.max(0, (parseFloat(totalInput.value || 0) - parseFloat(price))).toFixed(2);
+    saveInvoiceDraft();
+  }
+</script>
+
+<% if (typeof parts !== 'undefined' && parts.length > 0) { %>
+  <script>
+    const partResults = document.getElementById('partSearchResults');
+    <% parts.forEach(p => { %>
+      partResults.innerHTML += `
+        <button type="button" class="list-group-item list-group-item-action py-1 px-2" onclick="addPartToInvoice('<%= p.id %>', '<%= p.product_name %>', '<%= p.mrp_price %>')">
+          ➕ <strong><%= p.product_name %></strong> (<%= p.product_code %>) - Rs.<%= p.mrp_price %>
+        </button>
+      `;
+    <% }) %>
+  </script>
+<% } %>
+
+</div>
+</div>
+<!-- Modern Bootstrap Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body fw-semibold">
+        🎉 Bill Generated Successfully!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Automatically trigger the toast if the URL contains ?success=true
+  document.addEventListener('DOMContentLoaded', function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('success')) {
+      const toastEl = document.getElementById('successToast');
+      const toast = new bootstrap.Toast(toastEl, { delay: 4000 }); // hides after 4 seconds
+      toast.show();
+
+      // Clean up the URL parameter cleanly without refreshing the page
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  });
+</script>
+
 </body>
 </html>

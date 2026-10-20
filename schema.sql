@@ -37,3 +37,31 @@ CREATE TABLE IF NOT EXISTS spare_parts_inventory (
     mrp_price decimal(10, 2),
     purchase_price decimal(10, 2)
 );
+
+CREATE TABLE IF NOT EXISTS invoices (
+    id SERIAL PRIMARY KEY,
+    bill_to VARCHAR(20) NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total_bill decimal(10,2) NOT NULL,
+	service_type VARCHAR(20) NOT NULL,
+    customer_id INT REFERENCES customers(customer_id) ON DELETE CASCADE ,
+	bill_to_address TEXT,
+	vehicle_registration_id VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS invoice_details (
+    id SERIAL PRIMARY KEY,
+	invoice_id SERIAL REFERENCES invoices(id) ON DELETE CASCADE,
+    part_id SERIAL REFERENCES spare_parts_inventory(id) ON DELETE CASCADE
+);
+
+
+-- Table to store user credentials
+CREATE TABLE IF NOT EXISTS users (
+    user_id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(100),
+    role VARCHAR(20) DEFAULT 'staff',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
